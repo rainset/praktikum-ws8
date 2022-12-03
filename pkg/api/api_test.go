@@ -2,32 +2,21 @@ package api
 
 import (
 	"bytes"
-	"context"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
 
+	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+
+	mock_api "github.com/kilchik/nanomart/pkg/api/mocks"
 )
 
-type storageStub struct{}
-
-func (storageStub) InsertOrder(ctx context.Context, userID uint64, total uint64) (int64, error) {
-	return 1, nil
-}
-
-type storageMock struct {
-	insertFunc func(ctx context.Context, userID uint64, total uint64) (int64, error)
-}
-
-func (m *storageMock) InsertOrder(ctx context.Context, userID uint64, total uint64) (int64, error) {
-	return m.insertFunc(ctx, userID, total)
-}
-
 func TestApp_HandleCreateOrder(t *testing.T) {
-	storageMock := &storageMock{}
+	ctrl := gomock.NewController(t)
+	storageMock := mock_api.NewMockStorage(ctrl)
 
 	app := &App{store: storageMock}
 
@@ -48,11 +37,7 @@ func TestApp_HandleCreateOrder(t *testing.T) {
 	w := httptest.NewRecorder()
 	r := httptest.NewRequest("POST", "localhost:5301/api/v1/order", bytes.NewBuffer([]byte(req)))
 
-	storageMock.insertFunc = func(ctx context.Context, userID, total uint64) (int64, error) {
-		require.EqualValues(t, 42, userID)
-		return 3, nil
-	}
-
+	storageMock.EXPECT().InsertOrder(gomock.Any(), uint64(42), uint64(57)).Return(int64(3), nil)
 	app.HandleCreateOrder(w, r)
 
 	require.Equal(t, http.StatusCreated, w.Result().StatusCode)
