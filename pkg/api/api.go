@@ -1,12 +1,15 @@
 package api
 
 import (
+	"context"
 	"encoding/json"
 	"log"
 	"net/http"
-
-	"github.com/kilchik/nanomart/pkg/storage"
 )
+
+type Storage interface {
+	InsertOrder(ctx context.Context, userID uint64, total uint64) (int64, error)
+}
 
 type Item struct {
 	Name  string `json:"name"`
@@ -19,10 +22,10 @@ type CreateOrderRequest struct {
 }
 
 type App struct {
-	store *storage.Store
+	store Storage
 }
 
-func New(store *storage.Store) *App {
+func New(store Storage) *App {
 	return &App{store: store}
 }
 
@@ -56,5 +59,6 @@ func (a *App) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Reply
+	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(map[string]interface{}{"order_id": orderID})
 }
