@@ -1,0 +1,16 @@
+POST http://localhost:5301/api/v1/order
+Content-Type: application/json
+
+{
+    "user_id": 42,
+    "items": [
+        {
+            "name": "Milk",
+            "price": 45
+        },
+        {
+            "name": "Bread",
+            "price": 12
+        }
+    ]
+}
