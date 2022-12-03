@@ -49,6 +49,7 @@ func TestApp_HandleCreateOrder(t *testing.T) {
 	r := httptest.NewRequest("POST", "localhost:5301/api/v1/order", bytes.NewBuffer([]byte(req)))
 
 	storageMock.insertFunc = func(ctx context.Context, userID, total uint64) (int64, error) {
+		require.EqualValues(t, 42, userID)
 		return 3, nil
 	}
 
