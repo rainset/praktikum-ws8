@@ -9,25 +9,39 @@ import (
 	"github.com/pressly/goose/v3"
 
 	"github.com/jmoiron/sqlx"
-	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
+	"github.com/stretchr/testify/suite"
 )
 
-func TestStore_InsertOrder(t *testing.T) {
-	db := sqlx.MustOpen("sqlite3", "../../nanomart_test.db")
-	defer db.Close()
-	goose.SetDialect("sqlite3")
-	require.NoError(t, goose.Up(db.DB, "../../migrations"))
+type StorageTestSuite struct {
+	suite.Suite
+	db *sqlx.DB
+}
 
-	s := &Store{db}
+func (suite *StorageTestSuite) SetupTest() {
+	suite.db = sqlx.MustOpen("sqlite3", "../../nanomart_test.db")
+	goose.SetDialect("sqlite3")
+	require.NoError(suite.T(), goose.Up(suite.db.DB, "../../migrations"))
+}
+
+func (suite *StorageTestSuite) TearDownTest() {
+	suite.db.ExecContext(context.Background(), `DELETE FROM orders;`)
+}
+
+func (suite *StorageTestSuite) TestInsertOrder() {
+	s := &Store{suite.db}
 
 	_, err := s.InsertOrder(context.Background(), 42, 100)
 
-	require.NoError(t, err)
-	orders := getOrders(db)
-	require.Len(t, orders, 1)
-	assert.EqualValues(t, 42, orders[0].UserID)
-	assert.EqualValues(t, 100, orders[0].Total)
+	suite.Require().NoError(err)
+	orders := getOrders(suite.db)
+	suite.Require().Len(orders, 1)
+	suite.EqualValues(42, orders[0].UserID)
+	suite.EqualValues(100, orders[0].Total)
+}
+
+func TestStorageTestSuite(t *testing.T) {
+	suite.Run(t, new(StorageTestSuite))
 }
 
 type Order struct {
