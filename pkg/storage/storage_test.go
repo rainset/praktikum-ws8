@@ -6,6 +6,7 @@ import (
 	"time"
 
 	_ "github.com/mattn/go-sqlite3"
+	"github.com/pressly/goose/v3"
 
 	"github.com/jmoiron/sqlx"
 	"github.com/stretchr/testify/assert"
@@ -15,6 +16,9 @@ import (
 func TestStore_InsertOrder(t *testing.T) {
 	db := sqlx.MustOpen("sqlite3", "../../nanomart_test.db")
 	defer db.Close()
+	goose.SetDialect("sqlite3")
+	require.NoError(t, goose.Up(db.DB, "../../migrations"))
+
 	s := &Store{db}
 
 	_, err := s.InsertOrder(context.Background(), 42, 100)
