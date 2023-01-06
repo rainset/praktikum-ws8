@@ -3,12 +3,14 @@ package main
 import (
 	"log"
 	"net/http"
+	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
 	_ "github.com/mattn/go-sqlite3"
 	"github.com/prometheus/client_golang/prometheus/promhttp"
 
+	"github.com/kilchik/nanomart/internal/pkg/metrix"
 	"github.com/kilchik/nanomart/pkg/api"
 	"github.com/kilchik/nanomart/pkg/storage"
 )
@@ -27,6 +29,10 @@ func main() {
 		Handler: router,
 	}
 	go metricsSrv.ListenAndServe()
+
+	metrics := metrix.New()
+	metrics.IncResultsCounter(200)
+	metrics.ObserveLatency(time.Now().Add(-134 * time.Millisecond))
 
 	db := sqlx.MustOpen("sqlite3", "nanomart.db")
 
