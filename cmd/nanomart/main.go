@@ -3,7 +3,6 @@ package main
 import (
 	"log"
 	"net/http"
-	"time"
 
 	"github.com/gorilla/mux"
 	"github.com/jmoiron/sqlx"
@@ -31,15 +30,13 @@ func main() {
 	go metricsSrv.ListenAndServe()
 
 	metrics := metrix.New()
-	metrics.IncResultsCounter(200)
-	metrics.ObserveLatency(time.Now().Add(-134 * time.Millisecond))
 
 	db := sqlx.MustOpen("sqlite3", "nanomart.db")
 
 	store := storage.New(db)
 	app := api.New(store)
 
-	http.HandleFunc("/api/v1/order", app.HandleCreateOrder)
+	http.HandleFunc("/api/v1/order", metrics.Middleware(app.HandleCreateOrder))
 
 	log.Printf("listening %v", addrApp)
 	if err := http.ListenAndServe(addrApp, nil); err != nil {
