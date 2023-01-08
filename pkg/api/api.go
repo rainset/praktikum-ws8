@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+
+	"go.opentelemetry.io/otel"
 )
 
 type Storage interface {
@@ -46,10 +48,12 @@ func (a *App) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Calculate data for DB
+	_, span := otel.Tracer("").Start(r.Context(), "calculate sum")
 	var total uint64
 	for _, i := range req.Items {
 		total += i.Price
 	}
+	span.End()
 
 	// Save data to DB
 	orderID, err := a.store.InsertOrder(r.Context(), *req.UserID, total)

@@ -5,6 +5,7 @@ import (
 	"fmt"
 
 	"github.com/jmoiron/sqlx"
+	"go.opentelemetry.io/otel"
 )
 
 type Store struct {
@@ -16,6 +17,9 @@ func New(db *sqlx.DB) *Store {
 }
 
 func (s *Store) InsertOrder(ctx context.Context, userID uint64, total uint64) (int64, error) {
+	ctx, span := otel.Tracer("").Start(ctx, "insert order")
+	defer span.End()
+
 	const query = `INSERT INTO orders(user_id, total) VALUES ($1, $2) RETURNING id;`
 	res, err := s.db.ExecContext(ctx, query, userID, total)
 	if err != nil {
