@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"go.opentelemetry.io/otel"
+	"go.opentelemetry.io/otel/attribute"
 )
 
 type Storage interface {
@@ -53,6 +54,10 @@ func (a *App) HandleCreateOrder(w http.ResponseWriter, r *http.Request) {
 	for _, i := range req.Items {
 		total += i.Price
 	}
+	span.SetAttributes(
+		attribute.Int64("user_id", int64(*req.UserID)),
+		attribute.Int64("total", int64(total)),
+	)
 	span.End()
 
 	// Save data to DB
